@@ -1,4 +1,4 @@
-package com.thiagomv.timecontroler;
+package com.thiagomv.timecontroller;
 
 /**
  * Esta interface define os eventos lançados por {@link PeriodicTimeController}.

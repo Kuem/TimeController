@@ -1,4 +1,4 @@
-package com.thiagomv.timecontroler;
+package com.thiagomv.timecontroller;
 
 /**
  * Esta classe controla um temporizador para gerar eventos em intervalos de
