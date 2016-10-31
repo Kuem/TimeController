@@ -2,10 +2,10 @@ package com.thiagomv.timecontroller;
 
 /**
  * Esta classe controla um temporizador para gerar eventos em intervalos de
- * tempos fixos e constantes. Cada atrazo de tempo em um frame é compensado no
+ * tempos fixos e constantes. Cada atrazo de tempo em um frame ï¿½ compensado no
  * frame seguinte. Caso o atrazo for superior ao tempo de um frame, o atrazo
- * será considerado a partir do tempo previsto para o último frame e, neste
- * caso, um evento de delay será lançado indicando o número de frames perdidos
+ * serï¿½ considerado a partir do tempo previsto para o ï¿½ltimo frame e, neste
+ * caso, um evento de delay serï¿½ lanï¿½ado indicando o nï¿½mero de frames perdidos
  * pelo atrazo. Este controlador pode ser operado em um contexto multi-thread.
  * 
  * @author Thiago Mendes Vieira - thiagomv.0301.developer@gmail.com
@@ -18,19 +18,19 @@ public final class PeriodicTimeController {
 	/** Quantidade de nanosegundos em 1 segundo. */
 	private static final double NANOSECONDS_IN_ONE_SECOND = 1000000000.0;
 
-	/** Região crítica para controlar pausas. */
+	/** Regiï¿½o crï¿½tica para controlar pausas. */
 	private final Object lockPause = new Object();
 
 	/** Tempo entre os ciclos do temporizador. */
 	private final double timeCycle;
 
-	/** Indica se a temporizador está inicializado. */
+	/** Indica se a temporizador estï¿½ inicializado. */
 	private boolean initialized;
 
-	/** Indica se o temporizador está operando. */
+	/** Indica se o temporizador estï¿½ operando. */
 	private boolean running;
 
-	/** Indica se o temporizador está em modo Paused. */
+	/** Indica se o temporizador estï¿½ em modo Paused. */
 	private boolean paused;
 
 	/** Indica se uma pausa foi requisitada ao temporizador. */
@@ -39,16 +39,20 @@ public final class PeriodicTimeController {
 	/** Indica se um resume foi requisitado ao temporizador. */
 	private boolean resumeRequested;
 
-	/** Referência da Thread dedicada, utilizada para controlar o temporizador. */
+	/**
+	 * Referï¿½ncia da Thread dedicada, utilizada para controlar o temporizador.
+	 */
 	private Thread t;
 
 	/** Capturador de eventos de ITimeEvent. */
 	private PeriodicTimeEventListener timeHandle;
 
-	/** Tempo da última atualização. **/
+	/** Tempo da ï¿½ltima atualizaï¿½ï¿½o. **/
 	private long lastTime;
 
-	/** Atrazo na última atualização em relação ao tempo ideal que deveria ter. **/
+	/**
+	 * Atrazo na ï¿½ltima atualizaï¿½ï¿½o em relaï¿½ï¿½o ao tempo ideal que deveria ter.
+	 **/
 	private double delayLastTime;
 
 	/** Tempo real atual. **/
@@ -65,7 +69,7 @@ public final class PeriodicTimeController {
 	 * informada.
 	 * 
 	 * @param fps
-	 *            Quantidade de frames por segundo que este temporizador deverá
+	 *            Quantidade de frames por segundo que este temporizador deverï¿½
 	 *            suportar.
 	 */
 	public PeriodicTimeController(int fps) {
@@ -75,20 +79,19 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Estabelece o capturador de eventos deste controlador. Não é seguro chamar
-	 * este método quando o temporizador estiver em estado Resumed.
+	 * Estabelece o capturador de eventos deste controlador. Nï¿½o ï¿½ seguro chamar
+	 * este mï¿½todo quando o temporizador estiver em estado Resumed.
 	 * 
 	 * @param handle
 	 *            Capturador de eventos de ITimeEvent.
 	 */
-	public final synchronized void setTimeHandle(
-			PeriodicTimeEventListener handle) {
+	public final synchronized void setTimeHandle(PeriodicTimeEventListener handle) {
 		this.timeHandle = handle;
 	}
 
 	/**
-	 * Inicializa o temporizador (caso ainda não tenha sido inicializado). O
-	 * temporizador imediatamente irá para o estado de Paused.
+	 * Inicializa o temporizador (caso ainda nï¿½o tenha sido inicializado). O
+	 * temporizador imediatamente irï¿½ para o estado de Paused.
 	 */
 	public final synchronized void create() {
 		if (!initialized) {
@@ -99,7 +102,6 @@ public final class PeriodicTimeController {
 			resumeRequested = false;
 			t = new Thread(new Runnable() {
 
-				@Override
 				public void run() {
 					process();
 				}
@@ -109,10 +111,10 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Finaliza a execução do temporizador e seus recursos. Posteriormente o
-	 * controlador pode ser recriado pelo método {@code create()}. Se o
-	 * temporizador estiver em modo Paused ele irá imediatamente para o modo
-	 * Terminado. Caso o temporizador esteja em modo Resumed será solicitado que
+	 * Finaliza a execuï¿½ï¿½o do temporizador e seus recursos. Posteriormente o
+	 * controlador pode ser recriado pelo mï¿½todo {@code create()}. Se o
+	 * temporizador estiver em modo Paused ele irï¿½ imediatamente para o modo
+	 * Terminado. Caso o temporizador esteja em modo Resumed serï¿½ solicitado que
 	 * entre em modo de Paused e, em seguida, para o modo Terminado.
 	 */
 	public final synchronized void destroy() {
@@ -123,7 +125,7 @@ public final class PeriodicTimeController {
 			// Coloca em estado de Resumed apenas para finalizar o loop.
 			doResume();
 			try {
-				// Aguarda a finalização do loop.
+				// Aguarda a finalizaï¿½ï¿½o do loop.
 				t.join();
 			} catch (InterruptedException e) {
 				throw new RuntimeException("Erro em TimeController.onDestroy()");
@@ -134,7 +136,7 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Solicita a parada do temporizador e espera até que esteja em estado de
+	 * Solicita a parada do temporizador e espera atï¿½ que esteja em estado de
 	 * Paused.
 	 */
 	public final synchronized void pause() {
@@ -147,11 +149,10 @@ public final class PeriodicTimeController {
 				pauseRequested = true;
 				while (!paused)
 					try {
-						// Espera notificação de Paused do temporizador.
+						// Espera notificaï¿½ï¿½o de Paused do temporizador.
 						lockPause.wait();
 					} catch (InterruptedException e) {
-						throw new RuntimeException(
-								"Erro em TimeController.onPause()");
+						throw new RuntimeException("Erro em TimeController.onPause()");
 					}
 			}
 		}
@@ -159,7 +160,7 @@ public final class PeriodicTimeController {
 
 	/**
 	 * Solicita que o temporizador continue desde a contagem de quando foi
-	 * pausado. Espera até que o controlador esteja em estado de Resumed.
+	 * pausado. Espera atï¿½ que o controlador esteja em estado de Resumed.
 	 */
 	public final synchronized void resume() {
 		doResume();
@@ -168,19 +169,18 @@ public final class PeriodicTimeController {
 	private final void doResume() {
 		synchronized (lockPause) {
 			/*
-			 * Na inicialização do temporizador ele imediatamente passa para
-			 * modo de Paused. Mas pode acontecer de esta função ser chamada
+			 * Na inicializaï¿½ï¿½o do temporizador ele imediatamente passa para
+			 * modo de Paused. Mas pode acontecer de esta funï¿½ï¿½o ser chamada
 			 * antes da passagem para o modo Paused. Por isso deve ser
 			 * verificado.
 			 */
 			if (pauseRequested) {
 				while (!paused)
 					try {
-						// Espera notificação de Paused do temporizador.
+						// Espera notificaï¿½ï¿½o de Paused do temporizador.
 						lockPause.wait();
 					} catch (InterruptedException e) {
-						throw new RuntimeException(
-								"Erro em TimeController.onPause()");
+						throw new RuntimeException("Erro em TimeController.onPause()");
 					}
 			}
 
@@ -190,11 +190,10 @@ public final class PeriodicTimeController {
 				lockPause.notify();
 				while (paused) {
 					try {
-						// Espera notificação de Resumed do temporizador.
+						// Espera notificaï¿½ï¿½o de Resumed do temporizador.
 						lockPause.wait();
 					} catch (InterruptedException e) {
-						throw new RuntimeException(
-								"Erro em TimeController.onResume()");
+						throw new RuntimeException("Erro em TimeController.onResume()");
 					}
 				}
 			}
@@ -209,13 +208,13 @@ public final class PeriodicTimeController {
 		delayLastTime = 0.0;
 
 		while (running) {
-			// Trata possíveis solicitações de pausa.
+			// Trata possï¿½veis solicitaï¿½ï¿½es de pausa.
 			verifyPause();
 			if (!running) {
 				break;
 			}
 
-			// Calcula o tempo corrido desde a última atualização.
+			// Calcula o tempo corrido desde a ï¿½ltima atualizaï¿½ï¿½o.
 			nowTime = System.nanoTime();
 			elapsedTime = (double) (nowTime - lastTime) + delayLastTime;
 
@@ -229,7 +228,7 @@ public final class PeriodicTimeController {
 					onSuperdelay(delayLastTime);
 				}
 
-				// Atualiza o tempo da última atualização.
+				// Atualiza o tempo da ï¿½ltima atualizaï¿½ï¿½o.
 				lastTime = nowTime;
 			} else {
 				// Durma mais um pouco!
@@ -243,8 +242,8 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Verifica possíveis solicitações de pausa. Se uma pausa foi solicitada a
-	 * Thread irá esperar até que seja solicitada sua continuação.
+	 * Verifica possï¿½veis solicitaï¿½ï¿½es de pausa. Se uma pausa foi solicitada a
+	 * Thread irï¿½ esperar atï¿½ que seja solicitada sua continuaï¿½ï¿½o.
 	 */
 	private final void verifyPause() {
 		synchronized (lockPause) {
@@ -252,18 +251,17 @@ public final class PeriodicTimeController {
 				pausedTime = System.nanoTime();
 				pauseRequested = false;
 				paused = true;
-				// Notifica onPause() que o temporizador está Paused.
+				// Notifica onPause() que o temporizador estï¿½ Paused.
 				lockPause.notify();
 				while (!resumeRequested)
 					try {
 						lockPause.wait();// Espera onResume().
 					} catch (InterruptedException e) {
-						throw new RuntimeException(
-								"Erro em TimeController.verifyPause()");
+						throw new RuntimeException("Erro em TimeController.verifyPause()");
 					}
 				resumeRequested = false;
 				paused = false;
-				// Notifica onResume() que o temporizador está Resumed.
+				// Notifica onResume() que o temporizador estï¿½ Resumed.
 				lockPause.notify();
 
 				long totalTimePaused = System.nanoTime() - pausedTime;
@@ -273,9 +271,9 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Este método é utilizado para lançar um evento indicando a quantidade de
-	 * frames perdidos pelo atrazo. O método é assinado com synchronized para
-	 * proteger a linha de execução contra interrupções de pausa.
+	 * Este mï¿½todo ï¿½ utilizado para lanï¿½ar um evento indicando a quantidade de
+	 * frames perdidos pelo atrazo. O mï¿½todo ï¿½ assinado com synchronized para
+	 * proteger a linha de execuï¿½ï¿½o contra interrupï¿½ï¿½es de pausa.
 	 * 
 	 * @param delay
 	 *            Tempo total de atrazo.
@@ -290,9 +288,9 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Este método é utilizado para lançar um evento indicando o tempo decorrido
-	 * desde a última atualização. O método é assinado com synchronized para
-	 * proteger a linha de execução contra interrupções de pausa.
+	 * Este mï¿½todo ï¿½ utilizado para lanï¿½ar um evento indicando o tempo decorrido
+	 * desde a ï¿½ltima atualizaï¿½ï¿½o. O mï¿½todo ï¿½ assinado com synchronized para
+	 * proteger a linha de execuï¿½ï¿½o contra interrupï¿½ï¿½es de pausa.
 	 * 
 	 * @param time
 	 */
