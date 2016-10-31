@@ -17,11 +17,11 @@ public interface PeriodicTimeEventListener {
 	void onTimeEvent(double elapsedNanoseconds);
 
 	/**
-	 * Evento acionado quando o tempo de atrazo for igual ou superior ao ciclo
+	 * Evento acionado quando o tempo de atraso for igual ou superior ao ciclo
 	 * de 1 frame.
 	 * 
 	 * @param numFrames
-	 *            Quantidade de ciclos de frames perdidos no atrazo.
+	 *            Quantidade de ciclos de frames perdidos no atraso.
 	 */
 	void onFramesLost(int numFrames);
 }

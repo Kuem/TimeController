@@ -2,11 +2,11 @@ package com.thiagomv.timecontroller;
 
 /**
  * Esta classe controla um temporizador para gerar eventos em intervalos de
- * tempos fixos e constantes. Cada atrazo de tempo em um frame � compensado no
- * frame seguinte. Caso o atrazo for superior ao tempo de um frame, o atrazo
- * ser� considerado a partir do tempo previsto para o �ltimo frame e, neste
- * caso, um evento de delay ser� lan�ado indicando o n�mero de frames perdidos
- * pelo atrazo. Este controlador pode ser operado em um contexto multithread.
+ * tempos fixos e constantes. Cada atraso de tempo em um frame é compensado no
+ * frame seguinte. Caso o atraso for superior ao tempo de um frame, o atraso
+ * será considerado a partir do tempo previsto para o último frame e, neste
+ * caso, um evento de delay será lançado indicando o número de frames perdidos
+ * pelo atraso. Este controlador pode ser operado em um contexto multithread.
  * 
  * @author Thiago Mendes Vieira thiagomv.0301.developer@gmail.com
  * @version 1.0
@@ -18,19 +18,19 @@ public final class PeriodicTimeController {
 	/** Quantidade de nanosegundos em 1 segundo. */
 	private static final double NANOSECONDS_IN_ONE_SECOND = 1000000000.0;
 
-	/** Regi�o cr�tica para controlar pausas. */
+	/** Região crítica para controlar pausas. */
 	private final Object lockPause = new Object();
 
 	/** Tempo entre os ciclos do temporizador. */
 	private final double timeCycle;
 
-	/** Indica se a temporizador est� inicializado. */
+	/** Indica se a temporizador está inicializado. */
 	private boolean initialized;
 
-	/** Indica se o temporizador est� operando. */
+	/** Indica se o temporizador está operando. */
 	private boolean running;
 
-	/** Indica se o temporizador est� em modo Paused. */
+	/** Indica se o temporizador está em modo Paused. */
 	private boolean paused;
 
 	/** Indica se uma pausa foi requisitada ao temporizador. */
@@ -40,18 +40,18 @@ public final class PeriodicTimeController {
 	private boolean resumeRequested;
 
 	/**
-	 * Refer�ncia da Thread dedicada, utilizada para controlar o temporizador.
+	 * Referência da Thread dedicada, utilizada para controlar o temporizador.
 	 */
 	private Thread t;
 
 	/** Capturador de eventos de ITimeEvent. */
 	private PeriodicTimeEventListener timeHandle;
 
-	/** Tempo da �ltima atualiza��o. **/
+	/** Tempo da última atualização. **/
 	private long lastTime;
 
 	/**
-	 * Atrazo na �ltima atualiza��o em rela��o ao tempo ideal que deveria ter.
+	 * Atraso na última atualização em relação ao tempo ideal que deveria ter.
 	 **/
 	private double delayLastTime;
 
@@ -69,7 +69,7 @@ public final class PeriodicTimeController {
 	 * informada.
 	 * 
 	 * @param fps
-	 *            Quantidade de frames por segundo que este temporizador dever�
+	 *            Quantidade de frames por segundo que este temporizador deverá
 	 *            suportar.
 	 */
 	public PeriodicTimeController(int fps) {
@@ -79,8 +79,8 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Estabelece o capturador de eventos deste controlador. N�o � seguro chamar
-	 * este m�todo quando o temporizador estiver em estado Resumed.
+	 * Estabelece o capturador de eventos deste controlador. Não é seguro chamar
+	 * este método quando o temporizador estiver em estado Resumed.
 	 * 
 	 * @param handle
 	 *            Capturador de eventos de ITimeEvent.
@@ -90,8 +90,8 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Inicializa o temporizador (caso ainda n�o tenha sido inicializado). O
-	 * temporizador imediatamente ir� para o estado de Paused.
+	 * Inicializa o temporizador (caso ainda não tenha sido inicializado). O
+	 * temporizador imediatamente irá para o estado de Paused.
 	 */
 	public final synchronized void create() {
 		if (!initialized) {
@@ -111,10 +111,10 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Finaliza a execu��o do temporizador e seus recursos. Posteriormente o
-	 * controlador pode ser recriado pelo m�todo {@code create()}. Se o
-	 * temporizador estiver em modo Paused ele ir� imediatamente para o modo
-	 * Terminado. Caso o temporizador esteja em modo Resumed ser� solicitado que
+	 * Finaliza a execução do temporizador e seus recursos. Posteriormente o
+	 * controlador pode ser recriado pelo método {@code create()}. Se o
+	 * temporizador estiver em modo Paused ele irá imediatamente para o modo
+	 * Terminado. Caso o temporizador esteja em modo Resumed será solicitado que
 	 * entre em modo de Paused e, em seguida, para o modo Terminado.
 	 */
 	public final synchronized void destroy() {
@@ -125,7 +125,7 @@ public final class PeriodicTimeController {
 			// Coloca em estado de Resumed apenas para finalizar o loop.
 			doResume();
 			try {
-				// Aguarda a finaliza��o do loop.
+				// Aguarda a finalização do loop.
 				t.join();
 			} catch (InterruptedException e) {
 				throw new RuntimeException("Erro em TimeController.onDestroy()");
@@ -136,7 +136,7 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Solicita a parada do temporizador e espera at� que esteja em estado de
+	 * Solicita a parada do temporizador e espera até que esteja em estado de
 	 * Paused.
 	 */
 	public final synchronized void pause() {
@@ -149,7 +149,7 @@ public final class PeriodicTimeController {
 				pauseRequested = true;
 				while (!paused)
 					try {
-						// Espera notifica��o de Paused do temporizador.
+						// Espera notificação de Paused do temporizador.
 						lockPause.wait();
 					} catch (InterruptedException e) {
 						throw new RuntimeException("Erro em TimeController.onPause()");
@@ -160,7 +160,7 @@ public final class PeriodicTimeController {
 
 	/**
 	 * Solicita que o temporizador continue desde a contagem de quando foi
-	 * pausado. Espera at� que o controlador esteja em estado de Resumed.
+	 * pausado. Espera até que o controlador esteja em estado de Resumed.
 	 */
 	public final synchronized void resume() {
 		doResume();
@@ -169,15 +169,15 @@ public final class PeriodicTimeController {
 	private final void doResume() {
 		synchronized (lockPause) {
 			/*
-			 * Na inicializa��o do temporizador ele imediatamente passa para
-			 * modo de Paused. Mas pode acontecer de esta fun��o ser chamada
+			 * Na inicialização do temporizador ele imediatamente passa para
+			 * modo de Paused. Mas pode acontecer de esta função ser chamada
 			 * antes da passagem para o modo Paused. Por isso deve ser
 			 * verificado.
 			 */
 			if (pauseRequested) {
 				while (!paused)
 					try {
-						// Espera notifica��o de Paused do temporizador.
+						// Espera notificação de Paused do temporizador.
 						lockPause.wait();
 					} catch (InterruptedException e) {
 						throw new RuntimeException("Erro em TimeController.onPause()");
@@ -190,7 +190,7 @@ public final class PeriodicTimeController {
 				lockPause.notify();
 				while (paused) {
 					try {
-						// Espera notifica��o de Resumed do temporizador.
+						// Espera notificação de Resumed do temporizador.
 						lockPause.wait();
 					} catch (InterruptedException e) {
 						throw new RuntimeException("Erro em TimeController.onResume()");
@@ -208,13 +208,13 @@ public final class PeriodicTimeController {
 		delayLastTime = 0.0;
 
 		while (running) {
-			// Trata poss�veis solicita��es de pausa.
+			// Trata possíveis solicitações de pausa.
 			verifyPause();
 			if (!running) {
 				break;
 			}
 
-			// Calcula o tempo corrido desde a �ltima atualiza��o.
+			// Calcula o tempo corrido desde a última atualização.
 			nowTime = System.nanoTime();
 			elapsedTime = (double) (nowTime - lastTime) + delayLastTime;
 
@@ -228,7 +228,7 @@ public final class PeriodicTimeController {
 					onSuperdelay(delayLastTime);
 				}
 
-				// Atualiza o tempo da �ltima atualiza��o.
+				// Atualiza o tempo da última atualização.
 				lastTime = nowTime;
 			} else {
 				// Durma mais um pouco!
@@ -242,8 +242,8 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Verifica poss�veis solicita��es de pausa. Se uma pausa foi solicitada a
-	 * Thread ir� esperar at� que seja solicitada sua continua��o.
+	 * Verifica possíveis solicitações de pausa. Se uma pausa foi solicitada a
+	 * Thread irá esperar até que seja solicitada sua continuação.
 	 */
 	private final void verifyPause() {
 		synchronized (lockPause) {
@@ -251,7 +251,7 @@ public final class PeriodicTimeController {
 				pausedTime = System.nanoTime();
 				pauseRequested = false;
 				paused = true;
-				// Notifica onPause() que o temporizador est� Paused.
+				// Notifica onPause() que o temporizador está Paused.
 				lockPause.notify();
 				while (!resumeRequested)
 					try {
@@ -261,7 +261,7 @@ public final class PeriodicTimeController {
 					}
 				resumeRequested = false;
 				paused = false;
-				// Notifica onResume() que o temporizador est� Resumed.
+				// Notifica onResume() que o temporizador está Resumed.
 				lockPause.notify();
 
 				long totalTimePaused = System.nanoTime() - pausedTime;
@@ -271,12 +271,12 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Este m�todo � utilizado para lan�ar um evento indicando a quantidade de
-	 * frames perdidos pelo atrazo. O m�todo � assinado com synchronized para
-	 * proteger a linha de execu��o contra interrup��es de pausa.
+	 * Este método é utilizado para lançar um evento indicando a quantidade de
+	 * frames perdidos pelo atraso. O método é assinado com synchronized para
+	 * proteger a linha de execução contra interrupções de pausa.
 	 * 
 	 * @param delay
-	 *            Tempo total de atrazo.
+	 *            Tempo total de atraso.
 	 */
 	private final void onSuperdelay(double delay) {
 		delayLastTime = (delay % timeCycle);
@@ -288,9 +288,9 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Este m�todo � utilizado para lan�ar um evento indicando o tempo decorrido
-	 * desde a �ltima atualiza��o. O m�todo � assinado com synchronized para
-	 * proteger a linha de execu��o contra interrup��es de pausa.
+	 * Este método é utilizado para lançar um evento indicando o tempo decorrido
+	 * desde a última atualização. O método é assinado com synchronized para
+	 * proteger a linha de execução contra interrupções de pausa.
 	 * 
 	 * @param time
 	 */
