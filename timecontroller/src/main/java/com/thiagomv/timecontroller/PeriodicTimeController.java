@@ -21,10 +21,13 @@ public final class PeriodicTimeController {
 	/** Região crítica para controlar pausas. */
 	private final Object lockPause = new Object();
 
-	/** Tempo entre os ciclos do temporizador. */
+	/** Região crítica para controlar eventos. */
+	private final Object lockEvents = new Object();
+
+	/** Tempo entre os ciclos do temporizador, em nanosegundos. */
 	private final double timeCycle;
 
-	/** Indica se a temporizador está inicializado. */
+	/** Indica se o temporizador está inicializado. */
 	private boolean initialized;
 
 	/** Indica se o temporizador está operando. */
@@ -74,8 +77,6 @@ public final class PeriodicTimeController {
 	 */
 	public PeriodicTimeController(int fps) {
 		this.timeCycle = NANOSECONDS_IN_ONE_SECOND / fps;
-		this.initialized = false;
-		this.timeHandle = null;
 	}
 
 	/**
@@ -86,7 +87,9 @@ public final class PeriodicTimeController {
 	 *            Capturador de eventos de ITimeEvent.
 	 */
 	public final synchronized void setTimeHandle(PeriodicTimeEventListener handle) {
-		this.timeHandle = handle;
+		synchronized (lockEvents) {
+			this.timeHandle = handle;
+		}
 	}
 
 	/**
@@ -115,7 +118,8 @@ public final class PeriodicTimeController {
 	 * controlador pode ser recriado pelo método {@code create()}. Se o
 	 * temporizador estiver em modo Paused ele irá imediatamente para o modo
 	 * Terminado. Caso o temporizador esteja em modo Resumed será solicitado que
-	 * entre em modo de Paused e, em seguida, para o modo Terminado.
+	 * entre em modo de Paused e, em seguida, para o modo Terminado. Este método
+	 * aguarda o encerramento completo do temporizador antes de retornar.
 	 */
 	public final synchronized void destroy() {
 		if (initialized) {
@@ -216,16 +220,18 @@ public final class PeriodicTimeController {
 
 			// Calcula o tempo corrido desde a última atualização.
 			nowTime = System.nanoTime();
-			elapsedTime = (double) (nowTime - lastTime) + delayLastTime;
+			elapsedTime = ((double) (nowTime - lastTime)) + delayLastTime;
 
 			if (elapsedTime >= timeCycle) {
 				// Gerar eventos!
-				generateEvents(elapsedTime - delayLastTime);
+				synchronized (lockEvents) {
+					generateEvents(elapsedTime - delayLastTime);
 
-				delayLastTime = elapsedTime - timeCycle;
-				if (delayLastTime >= timeCycle) {
-					// Super delay!
-					onSuperdelay(delayLastTime);
+					delayLastTime = elapsedTime - timeCycle;
+					if (delayLastTime >= timeCycle) {
+						// Super delay!
+						onSuperdelay(delayLastTime);
+					}
 				}
 
 				// Atualiza o tempo da última atualização.
@@ -272,8 +278,7 @@ public final class PeriodicTimeController {
 
 	/**
 	 * Este método é utilizado para lançar um evento indicando a quantidade de
-	 * frames perdidos pelo atraso. O método é assinado com synchronized para
-	 * proteger a linha de execução contra interrupções de pausa.
+	 * frames perdidos pelo atraso.
 	 * 
 	 * @param delay
 	 *            Tempo total de atraso.
@@ -289,8 +294,7 @@ public final class PeriodicTimeController {
 
 	/**
 	 * Este método é utilizado para lançar um evento indicando o tempo decorrido
-	 * desde a última atualização. O método é assinado com synchronized para
-	 * proteger a linha de execução contra interrupções de pausa.
+	 * desde a última atualização.
 	 * 
 	 * @param time
 	 */
