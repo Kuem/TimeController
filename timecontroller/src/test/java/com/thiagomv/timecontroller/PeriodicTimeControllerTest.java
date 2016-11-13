@@ -5,7 +5,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
@@ -123,7 +125,7 @@ public class PeriodicTimeControllerTest {
 		assertTrue(
 				"A quantidade de eventos gerados deve ser compatível com o tempo corrido. Erro de precisao gerado: "
 						+ Math.abs((timeEvents) - (numSeconds * COMMON_FPS)) + ". Erro máximo esperado: " + 1 + ".",
-				Math.abs((timeEvents) - (numSeconds * COMMON_FPS)) < 1);
+				Math.abs((timeEvents) - (numSeconds * COMMON_FPS)) <= 1);
 
 		timeController.destroy();
 	}
@@ -222,8 +224,55 @@ public class PeriodicTimeControllerTest {
 				"A quantidade de eventos gerados e perdidos deve ser compatível com o tempo corrido. Erro de precisao gerado: "
 						+ Math.abs((timeEvents + framesLost) - (numSeconds * COMMON_FPS)) + ". Erro máximo esperado: "
 						+ framesParaSeremPerdidos + ".",
-				Math.abs((timeEvents + framesLost) - (numSeconds * COMMON_FPS)) < framesParaSeremPerdidos);
+				Math.abs((timeEvents + framesLost) - (numSeconds * COMMON_FPS)) <= framesParaSeremPerdidos);
 
 		timeController.destroy();
+	}
+
+	/**
+	 * Verifica que a ocorrência de uma exceção no evento do temporizador não
+	 * impacta o seu funcionamento.
+	 */
+	@Test(timeout = 3 * MILLISECONDS_IN_ONE_SECOND)
+	public void excecaoEmEventoDoTemporizador() {
+		Set<Boolean> throwed = new HashSet<>();
+
+		PeriodicTimeController timeController = new PeriodicTimeController(COMMON_FPS);
+		timeController.setTimeHandle(new PeriodicTimeEventListener() {
+
+			public void onTimeEvent(double elapsedNanoseconds) {
+				throwed.add(true);
+				throw new RuntimeException();
+			}
+
+			public void onFramesLost(int numFrames) {
+				throwed.add(true);
+				throw new RuntimeException();
+			}
+		});
+
+		timeController.create();
+		timeController.resume();
+		try {
+			Thread.sleep(MILLISECONDS_IN_ONE_SECOND);
+		} catch (InterruptedException e) {
+			fail();
+		}
+		timeController.destroy();
+
+		// Aguarda um tempo para imprimir a exceção lançada.
+		try {
+			Thread.sleep(MILLISECONDS_IN_ONE_SECOND);
+		} catch (InterruptedException e) {
+			fail();
+		}
+		assertThat(throwed, CoreMatchers.hasItem(true));
+	}
+
+	@Test
+	public void verificaFPS() {
+		PeriodicTimeController timeController = new PeriodicTimeController(COMMON_FPS);
+		assertThat(timeController.getTimeCycle(),
+				CoreMatchers.equalTo((double) NANOSECONDS_IN_ONE_SECOND / COMMON_FPS));
 	}
 }

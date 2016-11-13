@@ -31,7 +31,10 @@ public final class PeriodicTimeController {
 	private boolean initialized;
 
 	/** Indica se o temporizador está operando. */
-	private boolean running;
+	private volatile boolean running;
+
+	/** Indica se foi solicitado a finalização do temporizador. */
+	private volatile boolean destroyRequested;
 
 	/** Indica se o temporizador está em modo Paused. */
 	private boolean paused;
@@ -99,14 +102,23 @@ public final class PeriodicTimeController {
 	public final synchronized void create() {
 		if (!initialized) {
 			initialized = true;
-			running = true;
 			pauseRequested = true;
 			paused = false;
 			resumeRequested = false;
+			destroyRequested = false;
+			running = true;
 			t = new Thread(new Runnable() {
 
 				public void run() {
-					process();
+					try {
+						process();
+					} catch (Exception ex) {
+						synchronized (lockPause) {
+							running = false;
+							lockPause.notify();
+						}
+						throw ex;
+					}
 				}
 			});
 			t.start();
@@ -125,7 +137,7 @@ public final class PeriodicTimeController {
 		if (initialized) {
 			// Espera o temporizador terminar o que estiver fazendo.
 			doPause();
-			running = false;
+			destroyRequested = true;
 			// Coloca em estado de Resumed apenas para finalizar o loop.
 			doResume();
 			try {
@@ -172,32 +184,34 @@ public final class PeriodicTimeController {
 
 	private final void doResume() {
 		synchronized (lockPause) {
-			/*
-			 * Na inicialização do temporizador ele imediatamente passa para
-			 * modo de Paused. Mas pode acontecer de esta função ser chamada
-			 * antes da passagem para o modo Paused. Por isso deve ser
-			 * verificado.
-			 */
-			if (pauseRequested) {
-				while (!paused)
-					try {
-						// Espera notificação de Paused do temporizador.
-						lockPause.wait();
-					} catch (InterruptedException e) {
-						throw new RuntimeException("Erro em TimeController.onPause()");
-					}
-			}
+			if (running) {
+				/*
+				 * Na inicialização do temporizador ele imediatamente passa para
+				 * modo de Paused. Mas pode acontecer de esta função ser chamada
+				 * antes da passagem para o modo Paused. Por isso deve ser
+				 * verificado.
+				 */
+				if (pauseRequested) {
+					while (!paused)
+						try {
+							// Espera notificação de Paused do temporizador.
+							lockPause.wait();
+						} catch (InterruptedException e) {
+							throw new RuntimeException("Erro em TimeController.onResume()");
+						}
+				}
 
-			if (paused) {
-				resumeRequested = true;
-				// Notifica temporizador para ficar Resumed.
-				lockPause.notify();
-				while (paused) {
-					try {
-						// Espera notificação de Resumed do temporizador.
-						lockPause.wait();
-					} catch (InterruptedException e) {
-						throw new RuntimeException("Erro em TimeController.onResume()");
+				if (paused) {
+					resumeRequested = true;
+					// Notifica temporizador para ficar Resumed.
+					lockPause.notify();
+					while (paused) {
+						try {
+							// Espera notificação de Resumed do temporizador.
+							lockPause.wait();
+						} catch (InterruptedException e) {
+							throw new RuntimeException("Erro em TimeController.onResume()");
+						}
 					}
 				}
 			}
@@ -211,10 +225,10 @@ public final class PeriodicTimeController {
 		lastTime = System.nanoTime();
 		delayLastTime = 0.0;
 
-		while (running) {
+		while (running && !destroyRequested) {
 			// Trata possíveis solicitações de pausa.
 			verifyPause();
-			if (!running) {
+			if (!running || destroyRequested) {
 				break;
 			}
 
@@ -245,6 +259,7 @@ public final class PeriodicTimeController {
 				}
 			}
 		}
+		running = false;
 	}
 
 	/**
@@ -305,9 +320,9 @@ public final class PeriodicTimeController {
 	}
 
 	/**
-	 * Retorna o tempo de ciclo ideal para cada frame.
+	 * Retorna o tempo de ciclo ideal para cada frame, em nanosegundos.
 	 * 
-	 * @return Tempo de ciclo ideal para cada frame.
+	 * @return Tempo de ciclo ideal para cada frame, em nanosegundos.
 	 */
 	public double getTimeCycle() {
 		return this.timeCycle;
